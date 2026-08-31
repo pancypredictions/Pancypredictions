@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PANCY — Football Prediction Intelligence</title>
+  <meta name="description" content="PANCY - Personal football prediction and analytics platform">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <!-- Auth Overlay -->
+  <div id="auth-overlay" class="auth-overlay hidden">
+    <div class="auth-box">
+      <div class="auth-logo">⚽ PANCY</div>
+      <p class="auth-sub">Enter your access key</p>
+      <input type="password" id="auth-input" placeholder="Access key" autocomplete="off">
+      <button id="auth-btn" class="btn-primary">Unlock</button>
+      <p id="auth-error" class="auth-error"></p>
+    </div>
+  </div>
+
+  <!-- App Container -->
+  <div id="app" class="app hidden">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-brand">
+        <span class="header-logo">⚽</span>
+        <div>
+          <h1 class="header-title">PANCY</h1>
+          <span class="header-tag">Football Prediction Intelligence</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="theme-toggle" class="icon-btn" title="Toggle theme">🌙</button>
+        <button id="refresh-btn" class="icon-btn" title="Refresh data">🔄</button>
+        <span id="last-updated" class="last-updated">--:--</span>
+      </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-filter="all">All</button>
+      <button class="nav-tab" data-filter="live">🔴 Live</button>
+      <button class="nav-tab" data-filter="today">Today</button>
+      <button class="nav-tab" data-filter="upcoming">Upcoming</button>
+      <button class="nav-tab" data-filter="finished">Results</button>
+    </nav>
+
+    <!-- Search & Filters -->
+    <div class="toolbar">
+      <div class="search-box">
+        <span class="search-icon">🔎</span>
+        <input type="text" id="search-input" placeholder="Search teams, leagues...">
+      </div>
+      <select id="league-filter" class="league-select">
+        <option value="all">All Leagues</option>
+      </select>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Picks Section -->
+      <section id="top-picks-section" class="section">
+        <h2 class="section-title">🔥 Top Picks Today</h2>
+        <div id="top-picks-grid" class="top-picks-grid">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+      </section>
+
+      <!-- Live Section -->
+      <section id="live-section" class="section hidden">
+        <h2 class="section-title">⚡ Live Now</h2>
+        <div id="live-grid" class="matches-grid"></div>
+      </section>
+
+      <!-- Headlines -->
+      <section id="headlines-section" class="section">
+        <h2 class="section-title">📰 Football Headlines</h2>
+        <div id="headlines-list" class="headlines-list">
+          <div class="skeleton-text"></div>
+          <div class="skeleton-text"></div>
+        </div>
+      </section>
+
+      <!-- Matches -->
+      <section id="matches-section" class="section">
+        <h2 class="section-title" id="matches-title">📅 Matches</h2>
+        <div id="matches-grid" class="matches-grid">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+      </section>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="empty-state hidden">
+        <div class="empty-icon">📭</div>
+        <p>No matches found</p>
+        <button class="btn-secondary" onclick="app.loadMatches()">Reload</button>
+      </div>
+
+      <!-- API Error State -->
+      <div id="error-state" class="error-state hidden">
+        <div class="error-icon">⚠️</div>
+        <p>Data temporarily unavailable</p>
+        <p class="error-sub">Last update: <span id="error-time">--</span></p>
+      </div>
+    </main>
+
+    <!-- Picks Panel -->
+    <div id="picks-panel" class="picks-panel hidden">
+      <div class="picks-header">
+        <h3>My Picks</h3>
+        <button id="picks-close" class="icon-btn">✕</button>
+      </div>
+      <div id="picks-list" class="picks-list"></div>
+      <div class="picks-footer">
+        <span id="picks-count">0 selections</span>
+        <button id="picks-clear" class="btn-text">Clear All</button>
+      </div>
+    </div>
+
+    <!-- Match Detail Modal -->
+    <div id="match-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <button class="modal-close">✕</button>
+        <div id="match-detail"></div>
+      </div>
+    </div>
+
+    <!-- Prediction Alert Toast -->
+    <div id="toast" class="toast hidden">
+      <span id="toast-icon">⚠️</span>
+      <span id="toast-message"></span>
+    </div>
+
+    <!-- Bottom Bar (Mobile) -->
+    <div class="bottom-bar">
+      <button class="bottom-btn active" data-view="matches">
+        <span class="bottom-icon">🏠</span>
+        <span class="bottom-label">Home</span>
+      </button>
+      <button class="bottom-btn" data-view="live">
+        <span class="bottom-icon">🔴</span>
+        <span class="bottom-label">Live</span>
+      </button>
+      <button class="bottom-btn" data-view="picks">
+        <span class="bottom-icon">🎫</span>
+        <span class="bottom-label">Picks</span>
+        <span id="picks-badge" class="badge hidden">0</span>
+      </button>
+    </div>
+
+    <!-- Floating Picks Button (Desktop) -->
+    <button id="fab-picks" class="fab hidden-desktop">
+      🎫 <span id="fab-badge" class="badge hidden">0</span>
+    </button>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
